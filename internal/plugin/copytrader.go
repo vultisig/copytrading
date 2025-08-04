@@ -11,10 +11,9 @@ import (
 	"github.com/vultisig/recipes/sdk/evm"
 	"github.com/vultisig/verifier/common"
 	"github.com/vultisig/verifier/plugin"
+	"github.com/vultisig/verifier/plugin/keysign"
 	"github.com/vultisig/verifier/tx_indexer"
 	"github.com/vultisig/verifier/vault"
-
-	"copytrader/internal/keysign"
 )
 
 var _ plugin.Plugin = (*Plugin)(nil)

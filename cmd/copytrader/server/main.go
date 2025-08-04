@@ -90,11 +90,11 @@ func main() {
 		db,
 		redisStorage,
 		vaultStorage,
-		redisOptions,
 		client,
 		inspector,
 		sdClient,
 		ct,
+		nil,
 	)
 	if err := server.StartServer(); err != nil {
 		panic(err)

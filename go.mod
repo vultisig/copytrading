@@ -5,14 +5,14 @@ go 1.24.2
 require (
 	github.com/DataDog/datadog-go v4.8.3+incompatible
 	github.com/ethereum/go-ethereum v1.16.1
-	github.com/google/uuid v1.6.0
 	github.com/hibiken/asynq v0.25.1
+	github.com/kaptinlin/jsonschema v0.4.6
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.20.1
 	github.com/vultisig/mobile-tss-lib v0.0.0-20250316003201-2e7e570a4a74
-	github.com/vultisig/plugin v0.0.0-20250725113951-8baf58272461
-	github.com/vultisig/recipes v0.0.0-20250725112632-c546f5f66830
-	github.com/vultisig/verifier v0.0.0-20250723150319-a51c59a884bf
+	github.com/vultisig/plugin v0.0.0-20250730133612-4d073906efc4
+	github.com/vultisig/recipes v0.0.0-20250729120802-9b1d07f8262a
+	github.com/vultisig/verifier v0.0.0-20250731092019-00d44a4b02b9
 	github.com/vultisig/vultiserver v0.0.0-20250723092812-8cd6d494dd23
 	google.golang.org/protobuf v1.36.6
 )
@@ -55,6 +55,7 @@ require (
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/goccy/go-yaml v1.18.0 // indirect
 	github.com/gogo/protobuf v1.3.3 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/gotnospirit/makeplural v0.0.0-20180622080156-a5f48d94d976 // indirect
 	github.com/gotnospirit/messageformat v0.0.0-20221001023931-dfe49f1eb092 // indirect
@@ -69,7 +70,6 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/kaptinlin/go-i18n v0.1.4 // indirect
-	github.com/kaptinlin/jsonschema v0.4.6 // indirect
 	github.com/labstack/echo/v4 v4.13.3 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
@@ -117,6 +117,5 @@ replace (
 	github.com/agl/ed25519 => github.com/binance-chain/edwards25519 v0.0.0-20200305024217-f36fc4b53d43
 	github.com/cwespare/xxhash/v2 => github.com/cespare/xxhash/v2 v2.1.1
 	github.com/gogo/protobuf => github.com/gogo/protobuf v1.3.2
-	github.com/vultisig/verifier => ../verifier
 	nhooyr.io/websocket => github.com/coder/websocket v1.8.6
 )

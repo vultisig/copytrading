@@ -1,1 +1,1 @@
-# copytrading
+# Сopytrading
