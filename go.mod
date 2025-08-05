@@ -10,7 +10,6 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/hibiken/asynq v0.25.1
 	github.com/jackc/pgx/v5 v5.7.4
-	github.com/kaptinlin/jsonschema v0.4.6
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/labstack/gommon v0.4.2
 	github.com/pressly/goose/v3 v3.24.2
@@ -22,7 +21,6 @@ require (
 	github.com/vultisig/recipes v0.0.0-20250805093243-2060ffd4754e
 	github.com/vultisig/verifier v0.0.0-20250805095100-97183acf7136
 	github.com/vultisig/vultiserver v0.0.0-20250715212748-4b23f9849e4b
-	golang.org/x/sync v0.14.0
 	google.golang.org/protobuf v1.36.6
 )
 
@@ -75,6 +73,7 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/kaptinlin/go-i18n v0.1.4 // indirect
+	github.com/kaptinlin/jsonschema v0.4.6 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
@@ -106,6 +105,7 @@ require (
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/crypto v0.36.0 // indirect
 	golang.org/x/net v0.38.0 // indirect
+	golang.org/x/sync v0.14.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
 	golang.org/x/time v0.9.0 // indirect
