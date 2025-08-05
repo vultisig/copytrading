@@ -8,14 +8,15 @@ import (
 	"github.com/DataDog/datadog-go/statsd"
 	"github.com/hibiken/asynq"
 	"github.com/sirupsen/logrus"
-	"github.com/vultisig/plugin/api"
-	"github.com/vultisig/plugin/storage"
-	"github.com/vultisig/plugin/storage/postgres"
 	"github.com/vultisig/verifier/tx_indexer"
 	tx_indexer_storage "github.com/vultisig/verifier/tx_indexer/pkg/storage"
 	"github.com/vultisig/verifier/vault"
 
-	"copytrader/internal/plugin"
+	"github.com/vultisig/copytrading/internal/api"
+	"github.com/vultisig/copytrading/internal/plugin"
+	"github.com/vultisig/copytrading/internal/scheduler"
+	"github.com/vultisig/copytrading/internal/storage"
+	"github.com/vultisig/copytrading/internal/storage/postgres"
 )
 
 func main() {
@@ -94,7 +95,7 @@ func main() {
 		inspector,
 		sdClient,
 		ct,
-		nil,
+		scheduler.NewNilService(),
 	)
 	if err := server.StartServer(); err != nil {
 		panic(err)

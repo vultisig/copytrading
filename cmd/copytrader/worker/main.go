@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/hibiken/asynq"
 	"github.com/sirupsen/logrus"
-	"github.com/vultisig/plugin/storage/postgres"
 	"github.com/vultisig/verifier/plugin/keysign"
 	"github.com/vultisig/verifier/plugin/tasks"
 	"github.com/vultisig/verifier/tx_indexer"
@@ -16,7 +15,8 @@ import (
 	"github.com/vultisig/verifier/vault"
 	"github.com/vultisig/vultiserver/relay"
 
-	"copytrader/internal/plugin"
+	"github.com/vultisig/copytrading/internal/plugin"
+	"github.com/vultisig/copytrading/internal/storage/postgres"
 )
 
 func main() {
@@ -111,6 +111,8 @@ func main() {
 	if err != nil {
 		panic(fmt.Errorf("failed to create copytrader plugin: %w", err))
 	}
+
+	go ct.WatchSwap(ctx)
 
 	mux := asynq.NewServeMux()
 	mux.HandleFunc(tasks.TypePluginTransaction, ct.HandleSwapTask)

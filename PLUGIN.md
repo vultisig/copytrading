@@ -121,5 +121,13 @@ Transactions are initiated by the plugin service using the SDK from the **Recipe
 ## Fee Collection
 
 Plugin developers define the fee structure, which users pay upon installation and continued usage of the plugin.
+
+## Troubleshooting
+When running locally for debugging, you may encounter this error:
+```
+dyld[44167]: Library not loaded: /Users/johnnyluo/project/wallet/dkls23-rs/target/aarch64-apple-darwin/release/deps/libgodkls.dylib
+```
+For solving this you need to specify `DYLD_LIBRARY_PATH` env with dkls lib path. Latest version of the libraries you can find [there](https://github.com/vultisig/go-wrappers)
+
 ```
 

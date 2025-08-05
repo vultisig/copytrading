@@ -84,9 +84,7 @@ func (p *Plugin) WatchSwap(ctx context.Context) {
 						}
 
 						//Triggering swaps
-						fmt.Println("sender", sender.String())
-						fmt.Println("amount", amountIn.String())
-						fmt.Println("path: ", tokens)
+						p.logger.Info("new swap", "sender", sender.String(), "amount", amountIn.String(), "path: ", tokens)
 					}
 				}
 			}

@@ -6,9 +6,10 @@ import (
 	"strings"
 
 	"github.com/spf13/viper"
-	"github.com/vultisig/plugin/api"
-	"github.com/vultisig/plugin/storage"
 	"github.com/vultisig/verifier/vault_config"
+
+	"github.com/vultisig/copytrading/internal/api"
+	"github.com/vultisig/copytrading/internal/storage"
 )
 
 type CopytraderServerConfig struct {

@@ -4,14 +4,13 @@ services:
     environment:
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
-      POSTGRES_DB: vultisig-plugin
+      POSTGRES_DB: vultisig-copytrader
     ports:
       - "5431:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
-      - ./init-scripts:/docker-entrypoint-initdb.d
     healthcheck:
-      test: [ "CMD", "pg_isready", "-d", "vultisig-plugin", "-U", "myuser" ]
+      test: [ "CMD", "pg_isready", "-d", "vultisig-copytrader", "-U", "myuser" ]
       interval: 1s
       timeout: 5s
       retries: 3
@@ -31,14 +30,6 @@ services:
       retries: 3
     volumes:
       - redis_copytrader:/data
-
-  asynqmon:
-    platform: linux/amd64
-    image: hibiken/asynqmon:latest
-    ports:
-      - "8181:8080"
-    depends_on:
-      - redis-copytrader
 
   minio-plugin:
     build:

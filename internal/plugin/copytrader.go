@@ -7,13 +7,14 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/hibiken/asynq"
 	"github.com/sirupsen/logrus"
-	"github.com/vultisig/plugin/storage"
 	"github.com/vultisig/recipes/sdk/evm"
 	"github.com/vultisig/verifier/common"
 	"github.com/vultisig/verifier/plugin"
 	"github.com/vultisig/verifier/plugin/keysign"
 	"github.com/vultisig/verifier/tx_indexer"
 	"github.com/vultisig/verifier/vault"
+
+	"github.com/vultisig/copytrading/internal/storage"
 )
 
 var _ plugin.Plugin = (*Plugin)(nil)
