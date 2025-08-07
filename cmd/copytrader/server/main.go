@@ -81,6 +81,7 @@ func main() {
 		txIndexerService,
 		client,
 		cfg.Server.EncryptionSecret,
+		nil,
 	)
 	if err != nil {
 		logger.Fatalf("failed to create copytrader plugin,err: %s", err)

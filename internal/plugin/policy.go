@@ -100,6 +100,7 @@ func (p *Plugin) GetRecipeSpecification() (*rtypes.RecipeSchema, error) {
 					FunctionId: "swapExactTokensForTokens",
 					Full:       "ethereum.uniswapv2_router.swapExactTokensForTokens",
 				},
+				Target: rtypes.TargetType_TARGET_TYPE_ADDRESS,
 				ParameterCapabilities: []*rtypes.ParameterConstraintCapability{
 					{
 						ParameterName:  "aim",
@@ -123,7 +124,6 @@ func (p *Plugin) GetRecipeSpecification() (*rtypes.RecipeSchema, error) {
 					},
 				},
 				Required: true,
-				Target:   rtypes.TargetType_TARGET_TYPE_ADDRESS,
 			},
 		},
 		Configuration: cfg,

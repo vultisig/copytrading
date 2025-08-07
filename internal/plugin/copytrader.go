@@ -30,6 +30,7 @@ type Plugin struct {
 	vaultStorage          vault.Storage
 	vaultEncryptionSecret string
 	blockID               uint64
+	queue                 *WatcherQueue
 }
 
 func NewPlugin(
@@ -40,6 +41,7 @@ func NewPlugin(
 	txIndexerService *tx_indexer.Service,
 	client *asynq.Client,
 	vaultEncryptionSecret string,
+	queue *WatcherQueue,
 ) (*Plugin, error) {
 	if db == nil {
 		return nil, fmt.Errorf("database storage cannot be nil")
@@ -73,5 +75,6 @@ func NewPlugin(
 		vaultStorage:          vaultStorage,
 		vaultEncryptionSecret: vaultEncryptionSecret,
 		blockID:               currentBlock,
+		queue:                 queue,
 	}, nil
 }

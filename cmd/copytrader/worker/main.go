@@ -78,7 +78,7 @@ func main() {
 		panic(fmt.Errorf("failed to create vault service: %w", err))
 	}
 
-	postgressDB, err := postgres.NewPostgresBackend(cfg.Database.DSN, nil)
+	postgresDB, err := postgres.NewPostgresBackend(cfg.Database.DSN, nil)
 	if err != nil {
 		panic(fmt.Errorf("failed to create postgres backend: %w", err))
 	}
@@ -89,7 +89,7 @@ func main() {
 	}
 
 	ct, err := plugin.NewPlugin(
-		postgressDB,
+		postgresDB,
 		keysign.NewSigner(
 			logger.WithField("pkg", "keysign.Signer").Logger,
 			relay.NewRelayClient(cfg.VaultServiceConfig.Relay.Server),
@@ -107,12 +107,13 @@ func main() {
 		txIndexerService,
 		client,
 		cfg.VaultServiceConfig.EncryptionSecret,
+		&plugin.WatcherQueue{tasks.TypePluginTransaction, tasks.QUEUE_NAME},
 	)
 	if err != nil {
 		panic(fmt.Errorf("failed to create copytrader plugin: %w", err))
 	}
 
-	go ct.WatchSwap(ctx)
+	go ct.WatchUniswap(ctx)
 
 	mux := asynq.NewServeMux()
 	mux.HandleFunc(tasks.TypePluginTransaction, ct.HandleSwapTask)
