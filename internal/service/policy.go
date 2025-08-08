@@ -8,6 +8,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/sirupsen/logrus"
+	"github.com/vultisig/copytrading/internal/plugin"
+	"github.com/vultisig/copytrading/internal/types"
 	vtypes "github.com/vultisig/verifier/types"
 
 	"github.com/vultisig/copytrading/internal/scheduler"
@@ -61,9 +63,26 @@ func (s *PolicyService) CreatePolicy(ctx context.Context, policy vtypes.PluginPo
 		return nil, fmt.Errorf("failed to insert policy: %w", err)
 	}
 
-	err = s.scheduler.Create(ctx, tx, policy)
+	recipe, err := newPolicy.GetRecipe()
 	if err != nil {
-		return nil, fmt.Errorf("failed to create policy in scheduler: %w", err)
+		return nil, fmt.Errorf("failed to get recipe: %w", err)
+	}
+
+	var pairs []types.CopytradingPair
+	for _, rule := range recipe.Rules {
+		var pair types.CopytradingPair
+		params, err := plugin.RuleToPolicySwapParams(rule)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert rule to policy swap params: %w", err)
+		}
+		pair.PolicyID = policy.ID
+		pair.Resource = rule.Resource
+		pair.LeaderAddr = params.Aim
+	}
+
+	err = s.db.InsertCopytradingPairsTx(ctx, tx, pairs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert copy trading pairs: %w", err)
 	}
 
 	if err := tx.Commit(ctx); err != nil {
@@ -81,20 +100,42 @@ func (s *PolicyService) UpdatePolicy(ctx context.Context, policy vtypes.PluginPo
 	}
 	defer s.handleRollback(ctx, tx)
 
-	oldPolicy, err := s.db.GetPluginPolicy(ctx, policy.ID)
+	_, err = s.db.GetPluginPolicy(ctx, policy.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get plugin policy: %w", err)
-	}
-
-	err = s.scheduler.Update(ctx, tx, *oldPolicy, policy)
-	if err != nil {
-		return nil, fmt.Errorf("failed to update policy in scheduler: %w", err)
 	}
 
 	// Update policy with tx
 	updatedPolicy, err := s.db.UpdatePluginPolicyTx(ctx, tx, policy)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update policy: %w", err)
+	}
+
+	err = s.db.DeletePluginPolicyTx(ctx, tx, policy.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to delete policy: %w", err)
+	}
+
+	recipe, err := updatedPolicy.GetRecipe()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get recipe: %w", err)
+	}
+
+	var pairs []types.CopytradingPair
+	for _, rule := range recipe.Rules {
+		var pair types.CopytradingPair
+		params, err := plugin.RuleToPolicySwapParams(rule)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert rule to policy swap params: %w", err)
+		}
+		pair.PolicyID = policy.ID
+		pair.Resource = rule.Resource
+		pair.LeaderAddr = params.Aim
+	}
+
+	err = s.db.InsertCopytradingPairsTx(ctx, tx, pairs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert copy trading pairs: %w", err)
 	}
 
 	if err := tx.Commit(ctx); err != nil {
@@ -105,7 +146,6 @@ func (s *PolicyService) UpdatePolicy(ctx context.Context, policy vtypes.PluginPo
 }
 
 func (s *PolicyService) DeletePolicy(ctx context.Context, policyID uuid.UUID, signature string) error {
-
 	tx, err := s.db.Pool().Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
@@ -117,15 +157,9 @@ func (s *PolicyService) DeletePolicy(ctx context.Context, policyID uuid.UUID, si
 		return fmt.Errorf("failed to delete policy: %w", err)
 	}
 
-	err = s.scheduler.Delete(ctx, tx, policyID)
-	if err != nil {
-		return fmt.Errorf("failed to delete policy from scheduler: %w", err)
-	}
-
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
-
 	return nil
 }
 

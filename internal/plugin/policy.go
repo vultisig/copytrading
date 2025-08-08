@@ -87,6 +87,18 @@ func (p *Plugin) GetRecipeSpecification() (*rtypes.RecipeSchema, error) {
 				"type":   "string",
 				"format": "date-time",
 			},
+			frequency: map[string]any{
+				"type": "string",
+				"enum": []any{
+					daily,
+					weekly,
+					biWeekly,
+					monthly,
+				},
+			},
+		},
+		"required": []any{
+			frequency,
 		},
 	})
 	if err != nil {

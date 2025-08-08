@@ -11,17 +11,29 @@ import (
 	"github.com/vultisig/copytrading/internal/types"
 )
 
-func (p *PostgresBackend) InsertCopytradingPairTx(
+func (p *PostgresBackend) InsertCopytradingPairsTx(
 	ctx context.Context,
 	dbTx pgx.Tx,
-	policyID uuid.UUID,
-	resource string,
-	lead common.Address) error {
-	_, err := dbTx.Exec(ctx, `
-  	INSERT INTO copytrading_pair (policy_id, resource, leader_addr) 
-  	VALUES ($1, $2, $3)`, policyID, resource, lead.String())
-	if err != nil {
-		return fmt.Errorf("failed to create copytrading pair: %w", err)
+	pairs []types.CopytradingPair) error {
+	batch := pgx.Batch{}
+	for _, pair := range pairs {
+		batch.Queue(
+			`INSERT INTO copytrading_pair 
+            (policy_id, resource, leader_addr) 
+            VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
+			pair.PolicyID,
+			pair.Resource,
+			pair.LeaderAddr,
+		)
+	}
+	br := dbTx.SendBatch(ctx, &batch)
+	defer br.Close()
+
+	for range pairs {
+		_, err := br.Exec()
+		if err != nil {
+			return fmt.Errorf("failed to create copytrading pair: %w", err)
+		}
 	}
 	return nil
 }
@@ -52,7 +64,7 @@ func (p *PostgresBackend) GetPoliciesByResourceAndLeader(
 func (p *PostgresBackend) DeleteWithTx(ctx context.Context, tx pgx.Tx, policyID uuid.UUID) error {
 	_, err := tx.Exec(ctx, `
 		UPDATE copytrading_pair SET deleted_at = now()
-		WHERE policy_id = $1
+		WHERE policy_id = $1 AND deleted_at IS NULL
 	`, policyID)
 	if err != nil {
 		return fmt.Errorf("failed to delete pair: %w", err)
