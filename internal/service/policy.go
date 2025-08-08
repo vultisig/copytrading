@@ -111,7 +111,7 @@ func (s *PolicyService) UpdatePolicy(ctx context.Context, policy vtypes.PluginPo
 		return nil, fmt.Errorf("failed to update policy: %w", err)
 	}
 
-	err = s.db.DeletePluginPolicyTx(ctx, tx, policy.ID)
+	err = s.db.DeletePairsWithTx(ctx, tx, policy.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to delete policy: %w", err)
 	}
@@ -153,6 +153,11 @@ func (s *PolicyService) DeletePolicy(ctx context.Context, policyID uuid.UUID, si
 	defer s.handleRollback(ctx, tx)
 
 	err = s.db.DeletePluginPolicyTx(ctx, tx, policyID)
+	if err != nil {
+		return fmt.Errorf("failed to delete policy: %w", err)
+	}
+
+	err = s.db.DeletePairsWithTx(ctx, tx, policyID)
 	if err != nil {
 		return fmt.Errorf("failed to delete policy: %w", err)
 	}

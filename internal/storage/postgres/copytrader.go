@@ -61,7 +61,7 @@ func (p *PostgresBackend) GetPoliciesByResourceAndLeader(
 	return pairs, nil
 }
 
-func (p *PostgresBackend) DeleteWithTx(ctx context.Context, tx pgx.Tx, policyID uuid.UUID) error {
+func (p *PostgresBackend) DeletePairsWithTx(ctx context.Context, tx pgx.Tx, policyID uuid.UUID) error {
 	_, err := tx.Exec(ctx, `
 		UPDATE copytrading_pair SET deleted_at = now()
 		WHERE policy_id = $1 AND deleted_at IS NULL

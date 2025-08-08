@@ -23,7 +23,7 @@ type DatabaseStorage interface {
 
 	InsertCopytradingPairsTx(ctx context.Context, dbTx pgx.Tx, pairs []types.CopytradingPair) error
 	GetPoliciesByResourceAndLeader(ctx context.Context, resource string, lead common.Address) ([]types.CopytradingPair, error)
-	DeleteWithTx(ctx context.Context, tx pgx.Tx, policyID uuid.UUID) error
+	DeletePairsWithTx(ctx context.Context, tx pgx.Tx, policyID uuid.UUID) error
 
 	Pool() *pgxpool.Pool
 }
