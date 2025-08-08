@@ -10,10 +10,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/hibiken/asynq"
 	"github.com/vultisig/recipes/sdk/evm/codegen/uniswapv2_router"
 )
 
-func (p *Plugin) WatchSwap(ctx context.Context) {
+func (p *Plugin) WatchUniswap(ctx context.Context) {
 	var uniswapABI abi.ABI
 	err := json.Unmarshal([]byte(uniswapv2_router.Uniswapv2RouterMetaData.ABI), &uniswapABI)
 	if err != nil {
@@ -83,11 +84,34 @@ func (p *Plugin) WatchSwap(ctx context.Context) {
 							continue
 						}
 
-						//Triggering swaps
-						p.logger.Info("new swap", "sender", sender.String(), "amount", amountIn.String(), "path: ", tokens)
+						err = p.triggerSwap(ctx, &SwapTask{
+							Sender: sender,
+							Amount: amountIn,
+							Path:   tokens,
+						})
+						if err != nil {
+							p.logger.Error("failed to trigger swaps: %w\"", err)
+						}
 					}
 				}
 			}
 		}
 	}
+}
+
+func (p *Plugin) triggerSwap(ctx context.Context, t *SwapTask) error {
+	buf, err := json.Marshal(t)
+	if err != nil {
+		return err
+	}
+
+	_, err = p.client.EnqueueContext(
+		ctx,
+		asynq.NewTask(p.queue.Task, buf),
+		asynq.MaxRetry(0),
+		asynq.Timeout(5*time.Minute),
+		asynq.Retention(10*time.Minute),
+		asynq.Queue(p.queue.Name),
+	)
+	return err
 }

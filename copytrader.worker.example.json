@@ -1,7 +1,7 @@
 {
     "verifier": {
       "url": "http://localhost:8080",
-      "token": "localhost-apikey",
+      "token": "localhost-apikey-copytrading",
       "party_prefix": "verifier"
     },
     "rpc": {
