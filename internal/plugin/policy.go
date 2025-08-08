@@ -87,18 +87,6 @@ func (p *Plugin) GetRecipeSpecification() (*rtypes.RecipeSchema, error) {
 				"type":   "string",
 				"format": "date-time",
 			},
-			frequency: map[string]any{
-				"type": "string",
-				"enum": []any{
-					daily,
-					weekly,
-					biWeekly,
-					monthly,
-				},
-			},
-		},
-		"required": []any{
-			frequency,
 		},
 	})
 	if err != nil {
@@ -114,24 +102,34 @@ func (p *Plugin) GetRecipeSpecification() (*rtypes.RecipeSchema, error) {
 			{
 				ResourcePath: &rtypes.ResourcePath{
 					ChainId:    "ethereum",
-					ProtocolId: "erc20",
-					FunctionId: "transfer",
-					Full:       "ethereum.erc20.transfer",
+					ProtocolId: "uniswapv2_router",
+					FunctionId: "swapExactTokensForTokens",
+					Full:       "ethereum.uniswapv2_router.swapExactTokensForTokens",
 				},
-				Target: rtypes.TargetType_TARGET_TYPE_ADDRESS,
 				ParameterCapabilities: []*rtypes.ParameterConstraintCapability{
 					{
-						ParameterName:  "recipient",
+						ParameterName:  "aim",
+						SupportedTypes: rtypes.ConstraintType_CONSTRAINT_TYPE_FIXED,
+						Required:       true,
+					},
+					{
+						ParameterName:  "source_token",
+						SupportedTypes: rtypes.ConstraintType_CONSTRAINT_TYPE_FIXED,
+						Required:       true,
+					},
+					{
+						ParameterName:  "destination_token",
 						SupportedTypes: rtypes.ConstraintType_CONSTRAINT_TYPE_FIXED,
 						Required:       true,
 					},
 					{
 						ParameterName:  "amount",
-						SupportedTypes: rtypes.ConstraintType_CONSTRAINT_TYPE_FIXED,
+						SupportedTypes: rtypes.ConstraintType_CONSTRAINT_TYPE_MAX,
 						Required:       true,
 					},
 				},
 				Required: true,
+				Target:   rtypes.TargetType_TARGET_TYPE_ADDRESS,
 			},
 		},
 		Configuration: cfg,
