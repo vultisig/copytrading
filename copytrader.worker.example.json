@@ -1,6 +1,6 @@
 {
     "verifier": {
-      "url": "http://localhost:8080",
+      "url": "https://store.vultisigplugin.app/api/",
       "token": "localhost-apikey-copytrading",
       "party_prefix": "verifier"
     },
