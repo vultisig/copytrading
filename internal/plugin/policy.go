@@ -14,6 +14,12 @@ import (
 
 const (
 	startDate = "startDate"
+	frequency = "frequency"
+
+	daily    = "daily"
+	weekly   = "weekly"
+	biWeekly = "bi-weekly"
+	monthly  = "monthly"
 )
 
 func (p *Plugin) ValidateProposedTransactions(policy vtypes.PluginPolicy, txs []vtypes.PluginKeysignRequest) error {
@@ -89,7 +95,7 @@ func (p *Plugin) GetRecipeSpecification() (*rtypes.RecipeSchema, error) {
 
 	return &rtypes.RecipeSchema{
 		Version:       1, // Schema version
-		PluginId:      "vultisig-copytrading-0000",
+		PluginId:      "vultisig-copytrader-0000",
 		PluginName:    "Copy trading plugin",
 		PluginVersion: 1, // Convert from "0.1.0" to int32
 		SupportedResources: []*rtypes.ResourcePattern{
