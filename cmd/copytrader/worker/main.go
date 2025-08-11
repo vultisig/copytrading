@@ -78,7 +78,7 @@ func main() {
 		panic(fmt.Errorf("failed to create vault service: %w", err))
 	}
 
-	postgresDB, err := postgres.NewPostgresBackend(cfg.Database.DSN, nil)
+	postgresDB, err := postgres.NewPostgresBackend(logger, cfg.Database.DSN, nil)
 	if err != nil {
 		panic(fmt.Errorf("failed to create postgres backend: %w", err))
 	}

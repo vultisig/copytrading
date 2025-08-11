@@ -6,13 +6,16 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sirupsen/logrus"
+	"github.com/vultisig/verifier/plugin"
+
 	"github.com/vultisig/copytrading/internal/storage"
 )
 
 var _ storage.DatabaseStorage = (*PostgresBackend)(nil)
 
 type PostgresBackend struct {
-	pool *pgxpool.Pool
+	logger *logrus.Logger
+	pool   *pgxpool.Pool
 }
 
 type MigrationOptions struct {
@@ -20,14 +23,15 @@ type MigrationOptions struct {
 	RunPluginMigrations bool
 }
 
-func NewPostgresBackend(dsn string, opts *MigrationOptions) (*PostgresBackend, error) {
+func NewPostgresBackend(logger *logrus.Logger, dsn string, opts *MigrationOptions) (*PostgresBackend, error) {
 	pool, err := pgxpool.New(context.Background(), dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
 	backend := &PostgresBackend{
-		pool: pool,
+		logger: logger,
+		pool:   pool,
 	}
 
 	// Apply default options if not provided
@@ -56,9 +60,13 @@ func (p *PostgresBackend) Migrate(opts *MigrationOptions) error {
 
 	// Run system migrations first (plugin_policies table)
 	if opts.RunSystemMigrations {
-		systemMgr := NewSystemMigrationManager(p.pool)
-		if err := systemMgr.Migrate(); err != nil {
-			return fmt.Errorf("failed to run system migrations: %w", err)
+		policyMgr := plugin.NewMigrationManager(p.logger, p.pool, "policy/policy_pg/migrations")
+		if err := policyMgr.Migrate(); err != nil {
+			return fmt.Errorf("failed to run policy migrations: %w", err)
+		}
+		txIndexerMgr := plugin.NewMigrationManager(p.logger, p.pool, "tx_indexer/pkg/storage/migrations")
+		if err := txIndexerMgr.Migrate(); err != nil {
+			return fmt.Errorf("failed to run txIndexer migrations: %w", err)
 		}
 	}
 
