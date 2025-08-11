@@ -6,7 +6,6 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sirupsen/logrus"
-
 	"github.com/vultisig/copytrading/internal/storage"
 )
 

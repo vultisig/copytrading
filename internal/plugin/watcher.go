@@ -85,9 +85,10 @@ func (p *Plugin) WatchUniswap(ctx context.Context) {
 						}
 
 						err = p.triggerSwap(ctx, &SwapTask{
-							Sender: sender,
-							Amount: amountIn,
-							Path:   tokens,
+							Resource: "uniswapV2_router",
+							Sender:   sender,
+							Amount:   amountIn,
+							Path:     tokens,
 						})
 						if err != nil {
 							p.logger.Error("failed to trigger swaps: %w\"", err)

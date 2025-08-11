@@ -6,19 +6,18 @@ import (
 	"strings"
 
 	"github.com/spf13/viper"
+	"github.com/vultisig/verifier/plugin/config"
+	"github.com/vultisig/verifier/plugin/server"
 	"github.com/vultisig/verifier/vault_config"
-
-	"github.com/vultisig/copytrading/internal/api"
-	"github.com/vultisig/copytrading/internal/storage"
 )
 
 type CopytraderServerConfig struct {
-	Server   api.ServerConfig `mapstructure:"server" json:"server"`
+	Server   server.Config `mapstructure:"server" json:"server"`
 	Database struct {
 		DSN string `mapstructure:"dsn" json:"dsn,omitempty"`
 	} `mapstructure:"database" json:"database,omitempty"`
 	BaseConfigPath string                    `mapstructure:"base_config_path" json:"base_config_path,omitempty"`
-	Redis          storage.RedisConfig       `mapstructure:"redis" json:"redis,omitempty"`
+	Redis          config.Redis              `mapstructure:"redis" json:"redis,omitempty"`
 	BlockStorage   vault_config.BlockStorage `mapstructure:"block_storage" json:"block_storage,omitempty"`
 	Datadog        struct {
 		Host string `mapstructure:"host" json:"host,omitempty"`

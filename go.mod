@@ -18,8 +18,8 @@ require (
 	github.com/spf13/viper v1.20.1
 	github.com/vultisig/commondata v0.0.0-20250729094451-dd4705e13457
 	github.com/vultisig/mobile-tss-lib v0.0.0-20250316003201-2e7e570a4a74
-	github.com/vultisig/recipes v0.0.0-20250805093243-2060ffd4754e
-	github.com/vultisig/verifier v0.0.0-20250805095100-97183acf7136
+	github.com/vultisig/recipes v0.0.0-20250809142907-fed428b82740
+	github.com/vultisig/verifier v0.0.0-20250809020937-4535a7459d36
 	github.com/vultisig/vultiserver v0.0.0-20250715212748-4b23f9849e4b
 	google.golang.org/protobuf v1.36.6
 )
