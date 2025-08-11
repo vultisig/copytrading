@@ -21,9 +21,9 @@ type DatabaseStorage interface {
 	InsertPluginPolicyTx(ctx context.Context, dbTx pgx.Tx, policy vtypes.PluginPolicy) (*vtypes.PluginPolicy, error)
 	UpdatePluginPolicyTx(ctx context.Context, dbTx pgx.Tx, policy vtypes.PluginPolicy) (*vtypes.PluginPolicy, error)
 
-	InsertCopytradingPairTx(ctx context.Context, dbTx pgx.Tx, policyID uuid.UUID, resourse string, lead common.Address) error
+	InsertCopytradingPairsTx(ctx context.Context, dbTx pgx.Tx, pairs []types.CopytradingPair) error
 	GetPoliciesByResourceAndLeader(ctx context.Context, resource string, lead common.Address) ([]types.CopytradingPair, error)
-	DeleteWithTx(ctx context.Context, tx pgx.Tx, policyID uuid.UUID) error
+	DeletePairsWithTx(ctx context.Context, tx pgx.Tx, policyID uuid.UUID) error
 
 	Pool() *pgxpool.Pool
 }
