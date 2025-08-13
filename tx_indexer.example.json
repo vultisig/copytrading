@@ -1,6 +1,6 @@
 {
   "database": {
-    "dsn": "postgres://myuser:mypassword@localhost:5432/vultisig-verifier?sslmode=disable"
+    "dsn": "postgres://myuser:mypassword@localhost:5431/vultisig-copytrader?sslmode=disable"
   },
   "rpc": {
     "bitcoin": {
