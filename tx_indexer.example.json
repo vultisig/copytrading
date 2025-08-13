@@ -1,0 +1,17 @@
+{
+  "database": {
+    "dsn": "postgres://myuser:mypassword@localhost:5432/vultisig-verifier?sslmode=disable"
+  },
+  "rpc": {
+    "bitcoin": {
+      "url": "https://bitcoin-rpc.publicnode.com"
+    },
+    "ethereum": {
+      "url": "https://ethereum-rpc.publicnode.com"
+    }
+  },
+  "interval": "10s",
+  "iteration_timeout": "3m",
+  "mark_lost_after": "3h",
+  "concurrency": 50
+}

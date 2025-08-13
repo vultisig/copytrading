@@ -5,17 +5,16 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/DataDog/datadog-go/statsd"
 	"github.com/hibiken/asynq"
 	"github.com/sirupsen/logrus"
-	"github.com/vultisig/verifier/tx_indexer"
-	tx_indexer_storage "github.com/vultisig/verifier/tx_indexer/pkg/storage"
+	"github.com/vultisig/copytrading/internal/service"
+	"github.com/vultisig/verifier/plugin/redis"
+	"github.com/vultisig/verifier/plugin/server"
+	"github.com/vultisig/verifier/plugin/tx_indexer"
+	"github.com/vultisig/verifier/plugin/tx_indexer/pkg/storage"
 	"github.com/vultisig/verifier/vault"
 
-	"github.com/vultisig/copytrading/internal/api"
 	"github.com/vultisig/copytrading/internal/plugin"
-	"github.com/vultisig/copytrading/internal/scheduler"
-	"github.com/vultisig/copytrading/internal/storage"
 	"github.com/vultisig/copytrading/internal/storage/postgres"
 )
 
@@ -28,11 +27,7 @@ func main() {
 	}
 	logger := logrus.New()
 
-	sdClient, err := statsd.New(net.JoinHostPort(cfg.Datadog.Host, cfg.Datadog.Port))
-	if err != nil {
-		panic(err)
-	}
-	redisStorage, err := storage.NewRedisStorage(cfg.Redis)
+	redisStorage, err := redis.NewRedis(cfg.Redis)
 	if err != nil {
 		panic(err)
 	}
@@ -57,12 +52,12 @@ func main() {
 		panic(err)
 	}
 
-	db, err := postgres.NewPostgresBackend(cfg.Database.DSN, nil)
+	db, err := postgres.NewPostgresBackend(logger, cfg.Database.DSN, nil)
 	if err != nil {
 		logger.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	txIndexerStore, err := tx_indexer_storage.NewPostgresTxIndexStore(ctx, cfg.Database.DSN)
+	txIndexerStore, err := storage.NewPostgresTxIndexStore(ctx, cfg.Database.DSN)
 	if err != nil {
 		panic(fmt.Errorf("tx_indexer_storage.NewPostgresTxIndexStore: %w", err))
 	}
@@ -87,18 +82,19 @@ func main() {
 		logger.Fatalf("failed to create copytrader plugin,err: %s", err)
 	}
 
-	server := api.NewServer(
+	policyService, err := service.NewPolicyService(db, nil, logger)
+
+	srv := server.NewServer(
 		cfg.Server,
-		db,
+		policyService,
 		redisStorage,
 		vaultStorage,
 		client,
 		inspector,
-		sdClient,
 		ct,
-		scheduler.NewNilService(),
+		server.DefaultMiddlewares(),
 	)
-	if err := server.StartServer(); err != nil {
+	if err := srv.Start(ctx); err != nil {
 		panic(err)
 	}
 }

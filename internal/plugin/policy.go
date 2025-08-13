@@ -9,7 +9,6 @@ import (
 	rtypes "github.com/vultisig/recipes/types"
 	"github.com/vultisig/verifier/plugin"
 	vtypes "github.com/vultisig/verifier/types"
-	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -57,26 +56,7 @@ func (p *Plugin) ValidatePluginPolicy(policyDoc vtypes.PluginPolicy) error {
 	if err != nil {
 		return err
 	}
-	return validatePluginPolicy(policyDoc, spec)
-}
-
-func validatePluginPolicy(policyDoc vtypes.PluginPolicy, spec *rtypes.RecipeSchema) error {
-	policyBytes, err := base64.StdEncoding.DecodeString(policyDoc.Recipe)
-	if err != nil {
-		return fmt.Errorf("failed to decode policy recipe: %w", err)
-	}
-
-	var rPolicy rtypes.Policy
-	err = proto.Unmarshal(policyBytes, &rPolicy)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal policy: %w", err)
-	}
-
-	err = engine.NewEngine().ValidatePolicyWithSchema(&rPolicy, spec)
-	if err != nil {
-		return fmt.Errorf("failed to validate policy: %w", err)
-	}
-	return nil
+	return plugin.ValidatePluginPolicy(policyDoc, spec)
 }
 
 func (p *Plugin) GetRecipeSpecification() (*rtypes.RecipeSchema, error) {
@@ -127,12 +107,12 @@ func (p *Plugin) GetRecipeSpecification() (*rtypes.RecipeSchema, error) {
 					},
 					{
 						ParameterName:  "source_token",
-						SupportedTypes: rtypes.ConstraintType_CONSTRAINT_TYPE_FIXED,
+						SupportedTypes: rtypes.ConstraintType_CONSTRAINT_TYPE_ANY,
 						Required:       true,
 					},
 					{
 						ParameterName:  "destination_token",
-						SupportedTypes: rtypes.ConstraintType_CONSTRAINT_TYPE_FIXED,
+						SupportedTypes: rtypes.ConstraintType_CONSTRAINT_TYPE_ANY,
 						Required:       true,
 					},
 					{

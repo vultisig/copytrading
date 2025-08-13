@@ -10,21 +10,14 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/vultisig/copytrading/internal/plugin"
 	"github.com/vultisig/copytrading/internal/types"
+	"github.com/vultisig/verifier/plugin/policy"
+	"github.com/vultisig/verifier/plugin/scheduler"
 	vtypes "github.com/vultisig/verifier/types"
 
-	"github.com/vultisig/copytrading/internal/scheduler"
 	"github.com/vultisig/copytrading/internal/storage"
 )
 
-type Policy interface {
-	CreatePolicy(ctx context.Context, policy vtypes.PluginPolicy) (*vtypes.PluginPolicy, error)
-	UpdatePolicy(ctx context.Context, policy vtypes.PluginPolicy) (*vtypes.PluginPolicy, error)
-	DeletePolicy(ctx context.Context, policyID uuid.UUID, signature string) error
-	GetPluginPolicies(ctx context.Context, pluginID vtypes.PluginID, publicKey string, onlyActive bool) ([]vtypes.PluginPolicy, error)
-	GetPluginPolicy(ctx context.Context, policyID uuid.UUID) (*vtypes.PluginPolicy, error)
-}
-
-var _ Policy = (*PolicyService)(nil)
+var _ policy.Service = (*PolicyService)(nil)
 
 type PolicyService struct {
 	db        storage.DatabaseStorage
