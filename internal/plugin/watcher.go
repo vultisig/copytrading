@@ -50,6 +50,10 @@ func (p *Plugin) WatchUniswap(ctx context.Context) {
 					// is Uniswap tx check
 					if tx.To().String() == UniswapV2RouterAddress {
 						inputBytes := tx.Data()
+						if len(inputBytes) < 32 {
+
+							continue
+						}
 						signature, data := inputBytes[:4], inputBytes[4:]
 						if hex.EncodeToString(signature) != SwapExactTokensForTokens {
 							continue
@@ -85,7 +89,7 @@ func (p *Plugin) WatchUniswap(ctx context.Context) {
 						}
 
 						err = p.triggerSwap(ctx, &SwapTask{
-							Resource: "uniswapV2_router",
+							Resource: "ethereum.uniswapV2_router.swapExactTokensForTokens",
 							Sender:   sender,
 							Amount:   amountIn,
 							Path:     tokens,

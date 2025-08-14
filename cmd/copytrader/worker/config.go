@@ -28,7 +28,8 @@ type Rpc struct {
 }
 
 type rpcItem struct {
-	URL string `mapstructure:"url" json:"url,omitempty"`
+	URL       string `mapstructure:"url" json:"url,omitempty"`
+	FromBlock uint64 `mapstructure:"from_block" json:"from_block,omitempty"`
 }
 
 func GetConfigure() (*CopytraderWorkerConfig, error) {

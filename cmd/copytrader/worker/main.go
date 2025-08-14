@@ -107,7 +107,8 @@ func main() {
 		txIndexerService,
 		client,
 		cfg.VaultServiceConfig.EncryptionSecret,
-		&plugin.WatcherQueue{tasks.TypePluginTransaction, tasks.QUEUE_NAME},
+		&plugin.WatcherQueue{tasks.QUEUE_NAME, tasks.TypePluginTransaction},
+		cfg.Rpc.Ethereum.FromBlock,
 	)
 	if err != nil {
 		panic(fmt.Errorf("failed to create copytrader plugin: %w", err))

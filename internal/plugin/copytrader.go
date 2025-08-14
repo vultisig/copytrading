@@ -42,14 +42,14 @@ func NewPlugin(
 	client *asynq.Client,
 	vaultEncryptionSecret string,
 	queue *WatcherQueue,
+	fromBlock uint64,
 ) (*Plugin, error) {
 	if db == nil {
 		return nil, fmt.Errorf("database storage cannot be nil")
 	}
 
 	var (
-		eth          *evm.SDK
-		currentBlock uint64
+		eth *evm.SDK
 	)
 	if ethRpc != nil {
 		ethEvmChainID, err := common.Ethereum.EvmID()
@@ -58,9 +58,11 @@ func NewPlugin(
 		}
 		eth = evm.NewSDK(ethEvmChainID, ethRpc, ethRpc.Client())
 
-		currentBlock, err = ethRpc.BlockNumber(context.Background())
-		if err != nil {
-			return nil, fmt.Errorf("failed to get block: %w", err)
+		if fromBlock == 0 {
+			fromBlock, err = ethRpc.BlockNumber(context.Background())
+			if err != nil {
+				return nil, fmt.Errorf("failed to get block: %w", err)
+			}
 		}
 	}
 
@@ -74,7 +76,7 @@ func NewPlugin(
 		client:                client,
 		vaultStorage:          vaultStorage,
 		vaultEncryptionSecret: vaultEncryptionSecret,
-		blockID:               currentBlock,
+		blockID:               fromBlock,
 		queue:                 queue,
 	}, nil
 }

@@ -1,12 +1,13 @@
 {
     "verifier": {
-      "url": "https://store.vultisigplugin.app/api/",
+      "url": "http://localhost:8080",
       "token": "localhost-apikey-copytrading",
       "party_prefix": "verifier"
     },
     "rpc": {
       "ethereum": {
-        "url": "https://eth.llamarpc.com"
+        "url": "https://eth.llamarpc.com",
+        "from_block": 23138800
       }
     },
     "vault_service": {

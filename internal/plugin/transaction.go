@@ -19,7 +19,6 @@ import (
 	"github.com/vultisig/recipes/ethereum"
 	"github.com/vultisig/recipes/sdk/evm/codegen/uniswapv2_router"
 	rtypes "github.com/vultisig/recipes/types"
-	"github.com/vultisig/recipes/util"
 	"github.com/vultisig/verifier/address"
 	vcommon "github.com/vultisig/verifier/common"
 	"github.com/vultisig/verifier/plugin/tx_indexer/pkg/storage"
@@ -67,7 +66,7 @@ func (p *Plugin) HandleSwapTask(c context.Context, t *asynq.Task) error {
 		for _, _req := range reqs {
 			req := _req
 			eg.Go(func() error {
-				return p.initSign(ctx, req, *pluginPolicy)
+				return p.initSign(ctx, req)
 			})
 		}
 		err = eg.Wait()
@@ -113,12 +112,7 @@ func (p *Plugin) ProposeTransactions(ctx context.Context, policy vtypes.PluginPo
 	var eg errgroup.Group
 
 	for _, rule := range recipe.Rules {
-		resource, er := util.ParseResource(rule.GetResource())
-		if er != nil {
-			return nil, fmt.Errorf("failed to parse resource: %w", er)
-		}
-
-		if resource.GetProtocolId() != task.Resource {
+		if rule.GetResource() != task.Resource {
 			continue
 		}
 
@@ -171,7 +165,7 @@ func (p *Plugin) ProposeTransactions(ctx context.Context, policy vtypes.PluginPo
 					Messages: []vtypes.KeysignMessage{
 						{
 							TxIndexerID:  txToTrack.ID.String(),
-							Message:      base64.StdEncoding.EncodeToString(txHashToSign.Bytes()),
+							Message:      txHashToSign.Hex(),
 							Chain:        vcommon.Chain(chain),
 							Hash:         base64.StdEncoding.EncodeToString(msgHash[:]),
 							HashFunction: vtypes.HashFunction_SHA256,
@@ -180,7 +174,7 @@ func (p *Plugin) ProposeTransactions(ctx context.Context, policy vtypes.PluginPo
 					PolicyID: policy.ID,
 					PluginID: policy.PluginID.String(),
 				},
-				Transaction: txHex,
+				Transaction: base64.StdEncoding.EncodeToString(tx),
 			}
 
 			mu.Lock()
@@ -196,13 +190,12 @@ func (p *Plugin) ProposeTransactions(ctx context.Context, policy vtypes.PluginPo
 		return []vtypes.PluginKeysignRequest{}, fmt.Errorf("eg.Wait: %w", err)
 	}
 
-	return nil, nil
+	return txs, nil
 }
 
 func (p *Plugin) initSign(
 	ctx context.Context,
 	req vtypes.PluginKeysignRequest,
-	pluginPolicy vtypes.PluginPolicy,
 ) error {
 	sigs, err := p.signer.Sign(ctx, req)
 	if err != nil {
@@ -260,7 +253,7 @@ func RuleToPolicySwapParams(rule *rtypes.Rule) (*PolicySwapParams, error) {
 		return nil, fmt.Errorf("no parameter constraints found")
 	}
 
-	if len(rule.ParameterConstraints) > 4 {
+	if len(rule.ParameterConstraints) > 5 {
 		return nil, fmt.Errorf("too many parameter constraints found")
 	}
 
@@ -290,7 +283,7 @@ func RuleToPolicySwapParams(rule *rtypes.Rule) (*PolicySwapParams, error) {
 		if constraint.ParameterName == "amount" {
 			switch constraint.Constraint.Type {
 			case rtypes.ConstraintType_CONSTRAINT_TYPE_MAX:
-				params.MaxAmount = constraint.Constraint.GetMaxValue()
+				params.MaxAmount = constraint.Constraint.GetFixedValue()
 			default:
 				return nil, fmt.Errorf("invalid constraint type")
 			}
