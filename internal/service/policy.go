@@ -71,6 +71,7 @@ func (s *PolicyService) CreatePolicy(ctx context.Context, policy vtypes.PluginPo
 		pair.PolicyID = policy.ID
 		pair.Resource = rule.Resource
 		pair.LeaderAddr = params.Aim
+		pairs = append(pairs, pair)
 	}
 
 	err = s.db.InsertCopytradingPairsTx(ctx, tx, pairs)

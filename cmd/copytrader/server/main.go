@@ -77,6 +77,7 @@ func main() {
 		client,
 		cfg.Server.EncryptionSecret,
 		nil,
+		0,
 	)
 	if err != nil {
 		logger.Fatalf("failed to create copytrader plugin,err: %s", err)

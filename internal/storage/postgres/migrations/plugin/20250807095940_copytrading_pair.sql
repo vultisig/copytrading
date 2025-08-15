@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS copytrading_pair (
     policy_id     UUID         NOT NULL,
     resource      VARCHAR(255) NOT NULL,
     leader_addr   VARCHAR(255) NOT NULL,
-    follower_addr VARCHAR(255) NOT NULL,
     created_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted_at    TIMESTAMP
 );

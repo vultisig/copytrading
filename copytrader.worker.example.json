@@ -1,12 +1,13 @@
 {
     "verifier": {
-      "url": "https://store.vultisigplugin.app/api/",
+      "url": "http://localhost:8080",
       "token": "localhost-apikey-copytrading",
       "party_prefix": "verifier"
     },
     "rpc": {
       "ethereum": {
-        "url": "https://eth.llamarpc.com"
+        "url": "https://eth.llamarpc.com",
+        "from_block": 23138800
       }
     },
     "vault_service": {
@@ -24,7 +25,7 @@
         "password": "password"
     },
     "block_storage": {
-        "host": "http://minio-plugin:9000",
+        "host": "http://localhost:9100",
         "region": "us-east-1",
         "access_key": "minioadmin",
         "secret": "minioadmin",

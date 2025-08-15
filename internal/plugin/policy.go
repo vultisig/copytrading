@@ -94,9 +94,9 @@ func (p *Plugin) GetRecipeSpecification() (*rtypes.RecipeSchema, error) {
 			{
 				ResourcePath: &rtypes.ResourcePath{
 					ChainId:    "ethereum",
-					ProtocolId: "uniswapv2_router",
+					ProtocolId: "uniswapV2_router",
 					FunctionId: "swapExactTokensForTokens",
-					Full:       "ethereum.uniswapv2_router.swapExactTokensForTokens",
+					Full:       "ethereum.uniswapV2_router.swapExactTokensForTokens",
 				},
 				Target: rtypes.TargetType_TARGET_TYPE_ADDRESS,
 				ParameterCapabilities: []*rtypes.ParameterConstraintCapability{
@@ -118,6 +118,11 @@ func (p *Plugin) GetRecipeSpecification() (*rtypes.RecipeSchema, error) {
 					{
 						ParameterName:  "amount",
 						SupportedTypes: rtypes.ConstraintType_CONSTRAINT_TYPE_MAX,
+						Required:       true,
+					},
+					{
+						ParameterName:  "empty",
+						SupportedTypes: rtypes.ConstraintType_CONSTRAINT_TYPE_ANY,
 						Required:       true,
 					},
 				},
