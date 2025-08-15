@@ -6,6 +6,11 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	PolicyTarget      = "copyTarget"
+	PolicyDenominator = "denominator"
+)
+
 type CopytradingPair struct {
 	PolicyID   uuid.UUID `db:"policy_id"`
 	Resource   string    `db:"resource"`

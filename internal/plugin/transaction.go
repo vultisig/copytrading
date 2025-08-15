@@ -27,6 +27,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/vultisig/copytrading/internal/common"
+	ctypes "github.com/vultisig/copytrading/internal/types"
 )
 
 func (p *Plugin) HandleSwapTask(c context.Context, t *asynq.Task) error {
@@ -111,18 +112,20 @@ func (p *Plugin) ProposeTransactions(ctx context.Context, policy vtypes.PluginPo
 	)
 	var eg errgroup.Group
 
+	cfg := recipe.GetConfiguration().GetFields()
+	cfgTarget := cfg[ctypes.PolicyTarget].GetStringValue()
+
 	for _, rule := range recipe.Rules {
 		if rule.GetResource() != task.Resource {
+			continue
+		}
+		if cfgTarget != task.Sender.String() {
 			continue
 		}
 
 		params, er := RuleToPolicySwapParams(rule)
 		if er != nil {
 			return nil, fmt.Errorf("failed to convert rule to policy params: %w", er)
-		}
-
-		if params.Aim != task.Sender.String() {
-			continue
 		}
 
 		eg.Go(func() error {
@@ -259,31 +262,10 @@ func RuleToPolicySwapParams(rule *rtypes.Rule) (*PolicySwapParams, error) {
 
 	var params PolicySwapParams
 	for _, constraint := range rule.ParameterConstraints {
-		if constraint.ParameterName == "aim" {
-			if constraint.Constraint.Type != rtypes.ConstraintType_CONSTRAINT_TYPE_FIXED {
-				return nil, fmt.Errorf("aim constraint is not a fixed value")
-			}
-			params.Aim = constraint.Constraint.GetFixedValue()
-		}
-
-		if constraint.ParameterName == "source_token" {
-			if constraint.Constraint.Type != rtypes.ConstraintType_CONSTRAINT_TYPE_ANY {
-				return nil, fmt.Errorf("source_token constraint is not any value")
-			}
-			params.SourceToken = constraint.Constraint.GetFixedValue()
-		}
-
-		if constraint.ParameterName == "destination_token" {
-			if constraint.Constraint.Type != rtypes.ConstraintType_CONSTRAINT_TYPE_ANY {
-				return nil, fmt.Errorf("destination_token constraint is not any value")
-			}
-			params.DestinationToken = constraint.Constraint.GetFixedValue()
-		}
-
-		if constraint.ParameterName == "amount" {
+		if constraint.ParameterName == "amountIn" {
 			switch constraint.Constraint.Type {
-			case rtypes.ConstraintType_CONSTRAINT_TYPE_MAX:
-				params.MaxAmount = constraint.Constraint.GetFixedValue()
+			case rtypes.ConstraintType_CONSTRAINT_TYPE_FIXED:
+				params.Amount = constraint.Constraint.GetFixedValue()
 			default:
 				return nil, fmt.Errorf("invalid constraint type")
 			}
@@ -299,9 +281,9 @@ func (p *Plugin) genUnsignedTx(
 	params *PolicySwapParams,
 	task *SwapTask,
 ) ([]byte, error) {
-	amt, ok := new(big.Int).SetString(params.MaxAmount, 10)
+	amt, ok := new(big.Int).SetString(params.Amount, 10)
 	if !ok {
-		return nil, fmt.Errorf("failed to parse amount: %s", params.MaxAmount)
+		return nil, fmt.Errorf("failed to parse amount: %s", params.Amount)
 	}
 	if amt.Cmp(task.Amount) > 0 {
 		amt = task.Amount
@@ -313,7 +295,7 @@ func (p *Plugin) genUnsignedTx(
 		amt,
 		big.NewInt(1),
 		task.Path,
-		gcommon.BigToAddress(big.NewInt(1)),
+		gcommon.HexToAddress(senderAddress),
 		deadline,
 	)
 
