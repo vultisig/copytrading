@@ -6,8 +6,7 @@
     },
     "rpc": {
       "ethereum": {
-        "url": "https://eth.llamarpc.com",
-        "from_block": 23138800
+        "url": "https://eth.llamarpc.com"
       }
     },
     "vault_service": {

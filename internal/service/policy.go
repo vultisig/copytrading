@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/sirupsen/logrus"
-	"github.com/vultisig/copytrading/internal/plugin"
 	"github.com/vultisig/copytrading/internal/types"
 	"github.com/vultisig/verifier/plugin/policy"
 	"github.com/vultisig/verifier/plugin/scheduler"
@@ -61,16 +60,15 @@ func (s *PolicyService) CreatePolicy(ctx context.Context, policy vtypes.PluginPo
 		return nil, fmt.Errorf("failed to get recipe: %w", err)
 	}
 
+	cfg := recipe.GetConfiguration().GetFields()
+
 	var pairs []types.CopytradingPair
+	cfgTarget := cfg[types.PolicyTarget].GetStringValue()
 	for _, rule := range recipe.Rules {
 		var pair types.CopytradingPair
-		params, err := plugin.RuleToPolicySwapParams(rule)
-		if err != nil {
-			return nil, fmt.Errorf("failed to convert rule to policy swap params: %w", err)
-		}
 		pair.PolicyID = policy.ID
 		pair.Resource = rule.Resource
-		pair.LeaderAddr = params.Aim
+		pair.LeaderAddr = cfgTarget
 		pairs = append(pairs, pair)
 	}
 
@@ -115,16 +113,15 @@ func (s *PolicyService) UpdatePolicy(ctx context.Context, policy vtypes.PluginPo
 		return nil, fmt.Errorf("failed to get recipe: %w", err)
 	}
 
+	cfg := recipe.GetConfiguration().GetFields()
+	cfgTarget := cfg[types.PolicyTarget].GetStringValue()
+
 	var pairs []types.CopytradingPair
 	for _, rule := range recipe.Rules {
 		var pair types.CopytradingPair
-		params, err := plugin.RuleToPolicySwapParams(rule)
-		if err != nil {
-			return nil, fmt.Errorf("failed to convert rule to policy swap params: %w", err)
-		}
 		pair.PolicyID = policy.ID
 		pair.Resource = rule.Resource
-		pair.LeaderAddr = params.Aim
+		pair.LeaderAddr = cfgTarget
 	}
 
 	err = s.db.InsertCopytradingPairsTx(ctx, tx, pairs)

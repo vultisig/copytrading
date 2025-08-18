@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"os"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/v2"
@@ -19,11 +20,12 @@ import (
 func main() {
 	ctx := context.Background()
 
-	ethClient, err := ethclient.Dial("https://ethereum-rpc.publicnode.com")
+	ethClient, err := ethclient.Dial("https://eth.llamarpc.com")
 	if err != nil {
 		log.Fatal("failed to connect to eth client")
 	}
 
+	pk := os.Getenv("TEST_PK")
 	privateKey, err := crypto.HexToECDSA(pk)
 	if err != nil {
 		log.Fatal("failed to parse private key")

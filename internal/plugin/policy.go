@@ -9,16 +9,8 @@ import (
 	rtypes "github.com/vultisig/recipes/types"
 	"github.com/vultisig/verifier/plugin"
 	vtypes "github.com/vultisig/verifier/types"
-)
 
-const (
-	startDate = "startDate"
-	frequency = "frequency"
-
-	daily    = "daily"
-	weekly   = "weekly"
-	biWeekly = "bi-weekly"
-	monthly  = "monthly"
+	"github.com/vultisig/copytrading/internal/types"
 )
 
 func (p *Plugin) ValidateProposedTransactions(policy vtypes.PluginPolicy, txs []vtypes.PluginKeysignRequest) error {
@@ -63,22 +55,15 @@ func (p *Plugin) GetRecipeSpecification() (*rtypes.RecipeSchema, error) {
 	cfg, err := plugin.RecipeConfiguration(map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			startDate: map[string]any{
-				"type":   "string",
-				"format": "date-time",
-			},
-			frequency: map[string]any{
+			types.PolicyTarget: map[string]any{
 				"type": "string",
-				"enum": []any{
-					daily,
-					weekly,
-					biWeekly,
-					monthly,
-				},
+			},
+			types.PolicyDenominator: map[string]any{
+				"type": "int",
 			},
 		},
 		"required": []any{
-			frequency,
+			types.PolicyTarget,
 		},
 	})
 	if err != nil {
@@ -101,27 +86,27 @@ func (p *Plugin) GetRecipeSpecification() (*rtypes.RecipeSchema, error) {
 				Target: rtypes.TargetType_TARGET_TYPE_ADDRESS,
 				ParameterCapabilities: []*rtypes.ParameterConstraintCapability{
 					{
-						ParameterName:  "aim",
+						ParameterName:  "amountIn",
 						SupportedTypes: rtypes.ConstraintType_CONSTRAINT_TYPE_FIXED,
 						Required:       true,
 					},
 					{
-						ParameterName:  "source_token",
+						ParameterName:  "amountOutMin",
 						SupportedTypes: rtypes.ConstraintType_CONSTRAINT_TYPE_ANY,
 						Required:       true,
 					},
 					{
-						ParameterName:  "destination_token",
+						ParameterName:  "path",
 						SupportedTypes: rtypes.ConstraintType_CONSTRAINT_TYPE_ANY,
 						Required:       true,
 					},
 					{
-						ParameterName:  "amount",
-						SupportedTypes: rtypes.ConstraintType_CONSTRAINT_TYPE_MAX,
+						ParameterName:  "to",
+						SupportedTypes: rtypes.ConstraintType_CONSTRAINT_TYPE_FIXED,
 						Required:       true,
 					},
 					{
-						ParameterName:  "empty",
+						ParameterName:  "deadline",
 						SupportedTypes: rtypes.ConstraintType_CONSTRAINT_TYPE_ANY,
 						Required:       true,
 					},
