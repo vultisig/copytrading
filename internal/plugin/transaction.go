@@ -168,7 +168,7 @@ func (p *Plugin) ProposeTransactions(ctx context.Context, policy vtypes.PluginPo
 					Messages: []vtypes.KeysignMessage{
 						{
 							TxIndexerID:  txToTrack.ID.String(),
-							Message:      txHashToSign.Hex(),
+							Message:      base64.StdEncoding.EncodeToString(txHashToSign.Bytes()),
 							Chain:        vcommon.Chain(chain),
 							Hash:         base64.StdEncoding.EncodeToString(msgHash[:]),
 							HashFunction: vtypes.HashFunction_SHA256,
@@ -177,7 +177,7 @@ func (p *Plugin) ProposeTransactions(ctx context.Context, policy vtypes.PluginPo
 					PolicyID: policy.ID,
 					PluginID: policy.PluginID.String(),
 				},
-				Transaction: base64.StdEncoding.EncodeToString(tx),
+				Transaction: txHex,
 			}
 
 			mu.Lock()
