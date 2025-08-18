@@ -141,12 +141,6 @@ func (p *Plugin) ProposeTransactions(ctx context.Context, policy vtypes.PluginPo
 
 			txHex := gcommon.Bytes2Hex(tx)
 
-			txData, e := ethereum.DecodeUnsignedPayload(tx)
-			if e != nil {
-				return fmt.Errorf("ethereum.DecodeUnsignedPayload: %w", e)
-			}
-			txHashToSign := types.LatestSignerForChainID(ethEvmID).Hash(types.NewTx(txData))
-
 			txToTrack, e := p.txIndexerService.CreateTx(ctx, storage.CreateTxDto{
 				PluginID:      policy.PluginID,
 				PolicyID:      policy.ID,
@@ -158,6 +152,12 @@ func (p *Plugin) ProposeTransactions(ctx context.Context, policy vtypes.PluginPo
 			if e != nil {
 				return fmt.Errorf("p.txIndexerService.CreateTx: %w", e)
 			}
+
+			txData, e := ethereum.DecodeUnsignedPayload(tx)
+			if e != nil {
+				return fmt.Errorf("ethereum.DecodeUnsignedPayload: %w", e)
+			}
+			txHashToSign := types.LatestSignerForChainID(ethEvmID).Hash(types.NewTx(txData))
 
 			msgHash := sha256.Sum256(txHashToSign.Bytes())
 
