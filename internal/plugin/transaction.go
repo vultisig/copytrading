@@ -177,7 +177,7 @@ func (p *Plugin) ProposeTransactions(ctx context.Context, policy vtypes.PluginPo
 					PolicyID: policy.ID,
 					PluginID: policy.PluginID.String(),
 				},
-				Transaction: txHex,
+				Transaction: base64.StdEncoding.EncodeToString(tx),
 			}
 
 			mu.Lock()
@@ -230,16 +230,22 @@ func (p *Plugin) SigningComplete(
 	signature tss.KeysignResponse,
 	signRequest vtypes.PluginKeysignRequest,
 ) error {
+	txBytes, err := base64.StdEncoding.DecodeString(signRequest.Transaction)
+	if err != nil {
+		return fmt.Errorf("failed to decode b64 proposed tx: %w", err)
+	}
+	txHex := gcommon.Bytes2Hex(txBytes)
+
 	tx, err := p.eth.Send(
 		ctx,
-		gcommon.FromHex(signRequest.Transaction),
+		txBytes,
 		gcommon.Hex2Bytes(signature.R),
 		gcommon.Hex2Bytes(signature.S),
 		gcommon.Hex2Bytes(signature.RecoveryID),
 	)
 	if err != nil {
-		p.logger.WithError(err).WithField("tx_hex", signRequest.Transaction).Error("p.eth.Send")
-		return fmt.Errorf("p.eth.Send(tx_hex=%s): %w", signRequest.Transaction, err)
+		p.logger.WithError(err).WithField("tx_hex", txHex).Error("p.eth.Send")
+		return fmt.Errorf("p.eth.Send(tx_hex=%s): %w", txHex, err)
 	}
 
 	p.logger.WithFields(logrus.Fields{
