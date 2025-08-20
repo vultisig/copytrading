@@ -13,9 +13,10 @@ require (
 	github.com/spf13/viper v1.20.1
 	github.com/vultisig/commondata v0.0.0-20250729094451-dd4705e13457
 	github.com/vultisig/mobile-tss-lib v0.0.0-20250316003201-2e7e570a4a74
-	github.com/vultisig/recipes v0.0.0-20250809142907-fed428b82740
-	github.com/vultisig/verifier v0.0.0-20250809020937-4535a7459d36
+	github.com/vultisig/recipes v0.0.0-20250818151719-db3f03c3254c
+	github.com/vultisig/verifier v0.0.0-20250820091538-a29a985cae1d
 	github.com/vultisig/vultiserver v0.0.0-20250715212748-4b23f9849e4b
+	github.com/vultisig/vultisig-go v0.0.0-20250818095937-af97443fcbbe
 	golang.org/x/sync v0.14.0
 )
 
@@ -170,7 +171,7 @@ require (
 	github.com/ulikunitz/xz v0.5.12 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
-	github.com/vultisig/go-wrappers v0.0.0-20250403041248-86911e8aa33f // indirect
+	github.com/vultisig/go-wrappers v0.0.0-20250716071337-34a5c0f4d6e0 // indirect
 	go.etcd.io/bbolt v1.3.8 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
