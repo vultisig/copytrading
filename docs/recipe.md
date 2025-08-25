@@ -31,46 +31,90 @@ The schema defines:
 
 ### Defining Recipe Specifications
 
-Plugins must implement `GetRecipeSpecification()` to declare their capabilities:
+Plugins must implement `Spec` interface:
+```go
+type Spec interface {
+	GetRecipeSpecification() (*rtypes.RecipeSchema, error)
+	ValidatePluginPolicy(policyDoc types.PluginPolicy) error
+	Suggest(configuration map[string]any) (*rtypes.PolicySuggest, error)
+}
+```
 
 ```go
 func (p *Plugin) GetRecipeSpecification() (*rtypes.RecipeSchema, error) {
-    return &rtypes.RecipeSchema{
-        Version:       1,
-        PluginId:      "your_plugin_id",
-        PluginName:    "Your Plugin Name",
-        PluginVersion: 1,
-        SupportedResources: []*rtypes.ResourcePattern{
-            {
-                ResourcePath: &rtypes.ResourcePath{
-                    ChainId:    "ethereum",
-                    ProtocolId: "erc20",
-                    FunctionId: "transfer",
-                    Full:       "ethereum.erc20.transfer",
-                },
-                Target: rtypes.TargetType_TARGET_TYPE_ADDRESS,
-                ParameterCapabilities: []*rtypes.ParameterConstraintCapability{
-                    {
-                        ParameterName:  "recipient",
-                        SupportedTypes: rtypes.ConstraintType_CONSTRAINT_TYPE_FIXED,
-                        Required:       true,
-                    },
-                    {
-                        ParameterName:  "amount",
-                        SupportedTypes: rtypes.ConstraintType_CONSTRAINT_TYPE_FIXED,
-                        Required:       true,
-                    },
-                },
-            },
-        },
-        Configuration: cfg, // Optional configuration schema
-        Requirements: &rtypes.PluginRequirements{
-            MinVultisigVersion: 1,
-            SupportedChains:    []string{"ethereum"},
-        },
-    }, nil
+	cfg, err := plugin.RecipeConfiguration(map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			types.PolicyTarget: map[string]any{
+				"type": "string",
+			},
+			types.PolicyDenominator: map[string]any{
+				"type": "int",
+			},
+		},
+		"required": []any{
+			types.PolicyTarget,
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to build pb recipe config: %w", err)
+	}
+
+	return &rtypes.RecipeSchema{
+		Version:       1, // Schema version
+		PluginId:      "vultisig-copytrader-0000",
+		PluginName:    "Copy trading plugin",
+		PluginVersion: 1, // Convert from "0.1.0" to int32
+		SupportedResources: []*rtypes.ResourcePattern{
+			{
+				ResourcePath: &rtypes.ResourcePath{
+					ChainId:    "ethereum",
+					ProtocolId: "uniswapV2_router",
+					FunctionId: "swapExactTokensForTokens",
+					Full:       "ethereum.uniswapV2_router.swapExactTokensForTokens",
+				},
+				Target: rtypes.TargetType_TARGET_TYPE_ADDRESS,
+				ParameterCapabilities: []*rtypes.ParameterConstraintCapability{
+					{
+						ParameterName:  "amountIn",
+						SupportedTypes: rtypes.ConstraintType_CONSTRAINT_TYPE_FIXED,
+						Required:       true,
+					},
+					{
+						ParameterName:  "amountOutMin",
+						SupportedTypes: rtypes.ConstraintType_CONSTRAINT_TYPE_ANY,
+						Required:       true,
+					},
+					{
+						ParameterName:  "path",
+						SupportedTypes: rtypes.ConstraintType_CONSTRAINT_TYPE_ANY,
+						Required:       true,
+					},
+					{
+						ParameterName:  "to",
+						SupportedTypes: rtypes.ConstraintType_CONSTRAINT_TYPE_FIXED,
+						Required:       true,
+					},
+					{
+						ParameterName:  "deadline",
+						SupportedTypes: rtypes.ConstraintType_CONSTRAINT_TYPE_ANY,
+						Required:       true,
+					},
+				},
+				Required: true,
+			},
+		},
+		Configuration: cfg,
+		Requirements: &rtypes.PluginRequirements{
+			MinVultisigVersion: 1,
+			SupportedChains:    []string{"ethereum"},
+		},
+	}, nil
 }
 ```
+
+In `Configuration` field you need to define config for your plugin. Here you can place any variables necessary for your plugin and not directly related to transactions (e.g. scheduler operation, links to third-party resources, conditions for calling transactions, etc.).  
+In `Supported Resources` for EVM (for other tba), all function call parameters must be strictly defined according to the abi of smart contract. For constants where there is no need to have fixed value, you can specify ANY.
 
 ### Using the EVM SDK
 
