@@ -59,12 +59,12 @@ func main() {
 
 	txIndexerStore, err := storage.NewPostgresTxIndexStore(ctx, cfg.Database.DSN)
 	if err != nil {
-		logger.Fatalf("tx_indexer_storage.NewPostgresTxIndexStore: %w", err)
+		logger.Fatalf("tx_indexer_storage.NewPostgresTxIndexStore: %s", err)
 	}
 
 	txIndexerChains, err := tx_indexer.Chains()
 	if err != nil {
-		logger.Fatalf("tx_indexer_storage.Chains: %w", err)
+		logger.Fatalf("tx_indexer_storage.Chains: %s", err)
 	}
 
 	txIndexerService := tx_indexer.NewService(
@@ -89,6 +89,9 @@ func main() {
 	}
 
 	policyService, err := service.NewPolicyService(db, nil, logger)
+	if err != nil {
+		logger.Fatalf("failed to create policy service,err: %s", err)
+	}
 
 	srv := server.NewServer(
 		cfg.Server,
