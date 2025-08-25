@@ -2,9 +2,9 @@ package plugin
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 
-	rcommon "github.com/vultisig/recipes/common"
 	"github.com/vultisig/recipes/engine"
 	rtypes "github.com/vultisig/recipes/types"
 	"github.com/vultisig/verifier/plugin"
@@ -33,7 +33,7 @@ func (p *Plugin) ValidateProposedTransactions(policy vtypes.PluginPolicy, txs []
 				return fmt.Errorf("failed to decode transaction: %w", err)
 			}
 
-			_, err = eng.Evaluate(recipe, rcommon.Chain(keysignMessage.Chain), txBytes)
+			_, err = eng.Evaluate(recipe, keysignMessage.Chain, txBytes)
 			if err != nil {
 				return fmt.Errorf("failed to evaluate transaction: %w", err)
 			}
@@ -120,4 +120,9 @@ func (p *Plugin) GetRecipeSpecification() (*rtypes.RecipeSchema, error) {
 			SupportedChains:    []string{"ethereum"},
 		},
 	}, nil
+}
+
+func (p *Plugin) Suggest(configuration map[string]any) (*rtypes.PolicySuggest, error) {
+	//TODO implement me
+	return nil, errors.New("not implemented")
 }

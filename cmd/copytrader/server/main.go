@@ -59,13 +59,18 @@ func main() {
 
 	txIndexerStore, err := storage.NewPostgresTxIndexStore(ctx, cfg.Database.DSN)
 	if err != nil {
-		panic(fmt.Errorf("tx_indexer_storage.NewPostgresTxIndexStore: %w", err))
+		logger.Fatalf("tx_indexer_storage.NewPostgresTxIndexStore: %w", err)
+	}
+
+	txIndexerChains, err := tx_indexer.Chains()
+	if err != nil {
+		logger.Fatalf("tx_indexer_storage.Chains: %w", err)
 	}
 
 	txIndexerService := tx_indexer.NewService(
 		logger,
 		txIndexerStore,
-		tx_indexer.Chains(),
+		txIndexerChains,
 	)
 
 	ct, err := plugin.NewPlugin(

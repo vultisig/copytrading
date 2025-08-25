@@ -2,7 +2,6 @@ package plugin
 
 import (
 	"context"
-	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -11,19 +10,16 @@ import (
 	"time"
 
 	gcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/hibiken/asynq"
 	"github.com/sirupsen/logrus"
 	"github.com/vultisig/mobile-tss-lib/tss"
-	rcommon "github.com/vultisig/recipes/common"
-	"github.com/vultisig/recipes/ethereum"
 	"github.com/vultisig/recipes/sdk/evm/codegen/uniswapv2_router"
 	rtypes "github.com/vultisig/recipes/types"
-	"github.com/vultisig/verifier/address"
-	vcommon "github.com/vultisig/verifier/common"
 	"github.com/vultisig/verifier/plugin/tx_indexer/pkg/storage"
 	vtypes "github.com/vultisig/verifier/types"
 	"github.com/vultisig/vultiserver/contexthelper"
+	"github.com/vultisig/vultisig-go/address"
+	vgcommon "github.com/vultisig/vultisig-go/common"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/vultisig/copytrading/internal/common"
@@ -90,7 +86,7 @@ func (p *Plugin) ProposeTransactions(ctx context.Context, policy vtypes.PluginPo
 		return nil, fmt.Errorf("failed to get vault from policy: %w", err)
 	}
 
-	ethAddress, _, _, err := address.GetAddress(vault.PublicKeyEcdsa, vault.HexChainCode, vcommon.Ethereum)
+	ethAddress, _, _, err := address.GetAddress(vault.PublicKeyEcdsa, vault.HexChainCode, vgcommon.Ethereum)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get eth address: %w", err)
 	}
@@ -100,11 +96,7 @@ func (p *Plugin) ProposeTransactions(ctx context.Context, policy vtypes.PluginPo
 		return nil, fmt.Errorf("failed to get recipe from policy: %w", err)
 	}
 
-	chain := rcommon.Ethereum
-	ethEvmID, err := chain.EvmID()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get EVM ID for chain %s: %w", chain, err)
-	}
+	chain := vgcommon.Ethereum
 
 	var (
 		mu  = &sync.Mutex{}
@@ -144,7 +136,7 @@ func (p *Plugin) ProposeTransactions(ctx context.Context, policy vtypes.PluginPo
 			txToTrack, e := p.txIndexerService.CreateTx(ctx, storage.CreateTxDto{
 				PluginID:      policy.PluginID,
 				PolicyID:      policy.ID,
-				ChainID:       vcommon.Chain(chain),
+				ChainID:       chain,
 				FromPublicKey: policy.PublicKey,
 				ToPublicKey:   UniswapV2RouterAddress,
 				ProposedTxHex: txHex,
@@ -153,35 +145,11 @@ func (p *Plugin) ProposeTransactions(ctx context.Context, policy vtypes.PluginPo
 				return fmt.Errorf("p.txIndexerService.CreateTx: %w", e)
 			}
 
-			txData, e := ethereum.DecodeUnsignedPayload(tx)
-			if e != nil {
-				return fmt.Errorf("ethereum.DecodeUnsignedPayload: %w", e)
-			}
-			txHashToSign := types.LatestSignerForChainID(ethEvmID).Hash(types.NewTx(txData))
-
-			msgHash := sha256.Sum256(txHashToSign.Bytes())
-
-			// Create signing request
-			signRequest := vtypes.PluginKeysignRequest{
-				KeysignRequest: vtypes.KeysignRequest{
-					PublicKey: policy.PublicKey,
-					Messages: []vtypes.KeysignMessage{
-						{
-							TxIndexerID:  txToTrack.ID.String(),
-							Message:      base64.StdEncoding.EncodeToString(txHashToSign.Bytes()),
-							Chain:        vcommon.Chain(chain),
-							Hash:         base64.StdEncoding.EncodeToString(msgHash[:]),
-							HashFunction: vtypes.HashFunction_SHA256,
-						},
-					},
-					PolicyID: policy.ID,
-					PluginID: policy.PluginID.String(),
-				},
-				Transaction: base64.StdEncoding.EncodeToString(tx),
-			}
+			signRequest, e := vtypes.NewPluginKeysignRequestEvm(
+				policy, txToTrack.ID.String(), chain, tx)
 
 			mu.Lock()
-			txs = append(txs, signRequest)
+			txs = append(txs, *signRequest)
 			mu.Unlock()
 			return nil
 		})
@@ -252,7 +220,7 @@ func (p *Plugin) SigningComplete(
 		"from_public_key": signRequest.PublicKey,
 		"to_address":      tx.To().Hex(),
 		"hash":            tx.Hash().Hex(),
-		"chain":           vcommon.Ethereum.String(),
+		"chain":           vgcommon.Ethereum.String(),
 	}).Info("tx successfully signed and broadcasted")
 	return nil
 }
