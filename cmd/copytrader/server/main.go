@@ -89,6 +89,9 @@ func main() {
 	}
 
 	policyService, err := service.NewPolicyService(db, nil, logger)
+	if err != nil {
+		logger.Fatalf("failed to create policy service,err: %s", err)
+	}
 
 	srv := server.NewServer(
 		cfg.Server,
