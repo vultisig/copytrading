@@ -270,7 +270,7 @@ func (p *Plugin) initSign(
 			return fmt.Errorf("failed to wait tx being mined: %w", err)
 		}
 		if receipt.Status != types.ReceiptStatusSuccessful {
-			return fmt.Errorf("tx failed: receipt status %s", receipt.Status)
+			return fmt.Errorf("tx failed: receipt status %v", receipt.Status)
 		}
 	}
 	return nil
