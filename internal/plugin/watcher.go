@@ -75,7 +75,7 @@ func (p *Plugin) WatchUniswap(ctx context.Context) {
 
 						path := args["path"]
 						tokens, valid := path.([]common.Address)
-						if !valid {
+						if !valid || len(tokens) == 0 {
 							p.logger.Error("invalid path", path)
 							continue
 						}
