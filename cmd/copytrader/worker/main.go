@@ -13,7 +13,7 @@ import (
 	"github.com/vultisig/verifier/plugin/tx_indexer"
 	"github.com/vultisig/verifier/plugin/tx_indexer/pkg/storage"
 	"github.com/vultisig/verifier/vault"
-	"github.com/vultisig/vultiserver/relay"
+	"github.com/vultisig/vultisig-go/relay"
 
 	"github.com/vultisig/copytrading/internal/plugin"
 	"github.com/vultisig/copytrading/internal/storage/postgres"
