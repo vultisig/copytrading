@@ -62,7 +62,7 @@ func (p *Plugin) GetRecipeSpecification() (*rtypes.RecipeSchema, error) {
 				"type": "string",
 			},
 			types.PolicyDenominator: map[string]any{
-				"type": "int",
+				"type": "integer",
 			},
 		},
 		"required": []any{
