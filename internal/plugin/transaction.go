@@ -9,10 +9,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/hibiken/asynq"
 	"github.com/sirupsen/logrus"
 	"github.com/vultisig/mobile-tss-lib/tss"
+	"github.com/vultisig/recipes/sdk/evm"
+	"github.com/vultisig/recipes/sdk/evm/codegen/erc20"
 	"github.com/vultisig/recipes/sdk/evm/codegen/uniswapv2_router"
 	rtypes "github.com/vultisig/recipes/types"
 	"github.com/vultisig/verifier/plugin/tx_indexer/pkg/storage"
@@ -63,7 +67,7 @@ func (p *Plugin) HandleSwapTask(c context.Context, t *asynq.Task) error {
 		for _, _req := range reqs {
 			req := _req
 			eg.Go(func() error {
-				return p.initSign(ctx, req)
+				return p.initSign(ctx, req, false)
 			})
 		}
 		err = eg.Wait()
@@ -107,6 +111,11 @@ func (p *Plugin) ProposeTransactions(ctx context.Context, policy vtypes.PluginPo
 	cfg := recipe.GetConfiguration().GetFields()
 	cfgTarget := cfg[ctypes.PolicyTarget].GetStringValue()
 
+	if len(task.Path) == 0 {
+		return nil, fmt.Errorf("invalid task path")
+	}
+	startSwapToken := task.Path[0]
+
 	for _, rule := range recipe.Rules {
 		if rule.GetResource() != task.Resource {
 			continue
@@ -118,6 +127,67 @@ func (p *Plugin) ProposeTransactions(ctx context.Context, policy vtypes.PluginPo
 		params, er := RuleToPolicySwapParams(rule)
 		if er != nil {
 			return nil, fmt.Errorf("failed to convert rule to policy params: %w", er)
+		}
+
+		owner, router := gcommon.HexToAddress(ethAddress), gcommon.HexToAddress(UniswapV2RouterAddress)
+
+		erc20Contract := erc20.NewErc20()
+		allowanceData := erc20Contract.PackAllowance(owner, router)
+		currentAllowance, err := evm.CallReadonly(
+			ctx,
+			p.ethRpc,
+			erc20Contract,
+			startSwapToken,
+			allowanceData,
+			erc20Contract.UnpackAllowance,
+			nil,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to check allowance: %w", err)
+		}
+
+		amount, ok := new(big.Int).SetString(params.Amount, 10)
+		if !ok {
+			return nil, fmt.Errorf("failed to parse amount")
+		}
+
+		// Check allowance, approve if needed
+		if currentAllowance.Cmp(amount) < 0 {
+			tx, err := p.eth.MakeTx(
+				ctx,
+				owner,
+				startSwapToken,
+				big.NewInt(0),
+				erc20Contract.PackApprove(router, amount),
+			)
+			if err != nil {
+				return nil, fmt.Errorf("failed to make approve tx: %w", err)
+			}
+
+			txHex := gcommon.Bytes2Hex(tx)
+
+			txToTrack, e := p.txIndexerService.CreateTx(ctx, storage.CreateTxDto{
+				PluginID:      policy.PluginID,
+				PolicyID:      policy.ID,
+				ChainID:       chain,
+				FromPublicKey: policy.PublicKey,
+				ToPublicKey:   startSwapToken.String(),
+				ProposedTxHex: txHex,
+			})
+			if e != nil {
+				return nil, fmt.Errorf("p.txIndexerService.CreateTx: %w", e)
+			}
+
+			signRequest, e := vtypes.NewPluginKeysignRequestEvm(
+				policy, txToTrack.ID.String(), chain, tx)
+			if e != nil {
+				return nil, fmt.Errorf("vtypes.NewPluginKeysignRequestEvm: %w", e)
+			}
+
+			err = p.initSign(ctx, *signRequest, true)
+			if err != nil {
+				return nil, fmt.Errorf("failed to init sign: %w", err)
+			}
 		}
 
 		eg.Go(func() error {
@@ -167,6 +237,7 @@ func (p *Plugin) ProposeTransactions(ctx context.Context, policy vtypes.PluginPo
 func (p *Plugin) initSign(
 	ctx context.Context,
 	req vtypes.PluginKeysignRequest,
+	waitMined bool,
 ) error {
 	sigs, err := p.signer.Sign(ctx, req)
 	if err != nil {
@@ -185,10 +256,22 @@ func (p *Plugin) initSign(
 		sig = s
 	}
 
-	err = p.SigningComplete(ctx, sig, req)
+	tx, err := p.SigningComplete(ctx, sig, req)
 	if err != nil {
 		p.logger.WithError(err).Error("failed to complete signing process (broadcast tx)")
 		return fmt.Errorf("failed to complete signing process: %w", err)
+	}
+
+	if waitMined {
+		p.logger.Println("waiting for tx being mined")
+		receipt, err := bind.WaitMined(ctx, p.ethRpc, tx)
+		if err != nil {
+			p.logger.WithError(err).Error("failed to wait tx being mined")
+			return fmt.Errorf("failed to wait tx being mined: %w", err)
+		}
+		if receipt.Status != types.ReceiptStatusSuccessful {
+			return fmt.Errorf("tx failed: receipt status %v", receipt.Status)
+		}
 	}
 	return nil
 }
@@ -197,10 +280,10 @@ func (p *Plugin) SigningComplete(
 	ctx context.Context,
 	signature tss.KeysignResponse,
 	signRequest vtypes.PluginKeysignRequest,
-) error {
+) (*types.Transaction, error) {
 	txBytes, err := base64.StdEncoding.DecodeString(signRequest.Transaction)
 	if err != nil {
-		return fmt.Errorf("failed to decode b64 proposed tx: %w", err)
+		return nil, fmt.Errorf("failed to decode b64 proposed tx: %w", err)
 	}
 	txHex := gcommon.Bytes2Hex(txBytes)
 
@@ -213,7 +296,7 @@ func (p *Plugin) SigningComplete(
 	)
 	if err != nil {
 		p.logger.WithError(err).WithField("tx_hex", txHex).Error("p.eth.Send")
-		return fmt.Errorf("p.eth.Send(tx_hex=%s): %w", txHex, err)
+		return nil, fmt.Errorf("p.eth.Send(tx_hex=%s): %w", txHex, err)
 	}
 
 	p.logger.WithFields(logrus.Fields{
@@ -222,7 +305,7 @@ func (p *Plugin) SigningComplete(
 		"hash":            tx.Hash().Hex(),
 		"chain":           vgcommon.Ethereum.String(),
 	}).Info("tx successfully signed and broadcasted")
-	return nil
+	return tx, nil
 }
 
 func RuleToPolicySwapParams(rule *rtypes.Rule) (*PolicySwapParams, error) {
