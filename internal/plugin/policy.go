@@ -2,12 +2,15 @@ package plugin
 
 import (
 	"encoding/base64"
-	"errors"
+	"encoding/json"
 	"fmt"
+	"strings"
 
+	"github.com/kaptinlin/jsonschema"
 	"github.com/vultisig/recipes/engine"
 	rtypes "github.com/vultisig/recipes/types"
 	"github.com/vultisig/verifier/plugin"
+	"github.com/vultisig/verifier/tx_indexer/pkg/conv"
 	vtypes "github.com/vultisig/verifier/types"
 
 	"github.com/vultisig/copytrading/internal/types"
@@ -59,7 +62,7 @@ func (p *Plugin) GetRecipeSpecification() (*rtypes.RecipeSchema, error) {
 				"type": "string",
 			},
 			types.PolicyDenominator: map[string]any{
-				"type": "int",
+				"type": "integer",
 			},
 		},
 		"required": []any{
@@ -122,7 +125,100 @@ func (p *Plugin) GetRecipeSpecification() (*rtypes.RecipeSchema, error) {
 	}, nil
 }
 
-func (p *Plugin) Suggest(configuration map[string]any) (*rtypes.PolicySuggest, error) {
-	//TODO implement me
-	return nil, errors.New("not implemented")
+func (p *Plugin) validateConfiguration(cfg map[string]any) error {
+	spec, err := p.GetRecipeSpecification()
+	if err != nil {
+		return fmt.Errorf("failed to get recipe specification: %w", err)
+	}
+
+	schemaMap := spec.Configuration.AsMap()
+	schemaBytes, err := json.Marshal(schemaMap)
+	if err != nil {
+		return fmt.Errorf("failed to marshal schema: %w", err)
+	}
+
+	compiler := jsonschema.NewCompiler()
+	schema, err := compiler.Compile(schemaBytes)
+	if err != nil {
+		return fmt.Errorf("failed to compile JSON schema: %w", err)
+	}
+
+	cfgBytes, err := json.Marshal(cfg)
+	if err != nil {
+		return fmt.Errorf("failed to marshal config: %w", err)
+	}
+
+	res := schema.Validate(cfgBytes)
+	if !res.IsValid() {
+		var errStrs []string
+		for _, e := range res.Errors {
+			errStrs = append(errStrs, e.Error())
+		}
+		return fmt.Errorf("configuration validation error: %s", strings.Join(errStrs, ", "))
+	}
+
+	return nil
+}
+
+func (p *Plugin) Suggest(cfg map[string]any) (*rtypes.PolicySuggest, error) {
+	if err := p.validateConfiguration(cfg); err != nil {
+		return nil, fmt.Errorf("configuration validation failed: %w", err)
+	}
+
+	var rules []*rtypes.Rule
+	constraints := []*rtypes.ParameterConstraint{
+		{
+			ParameterName: "amountIn",
+			Constraint: &rtypes.Constraint{
+				Type: rtypes.ConstraintType_CONSTRAINT_TYPE_FIXED,
+				Value: &rtypes.Constraint_FixedValue{
+					FixedValue: "1000",
+				},
+			},
+		},
+		{
+			ParameterName: "amountOutMin",
+			Constraint: &rtypes.Constraint{
+				Type: rtypes.ConstraintType_CONSTRAINT_TYPE_ANY,
+			},
+		},
+		{
+			ParameterName: "path",
+			Constraint: &rtypes.Constraint{
+				Type: rtypes.ConstraintType_CONSTRAINT_TYPE_ANY,
+			},
+		},
+		{
+			ParameterName: "to",
+			Constraint: &rtypes.Constraint{
+				Type: rtypes.ConstraintType_CONSTRAINT_TYPE_FIXED,
+				Value: &rtypes.Constraint_FixedValue{
+					FixedValue: "0xPlaceYourAddressHere",
+				},
+			},
+		},
+		{
+			ParameterName: "deadline",
+			Constraint: &rtypes.Constraint{
+				Type: rtypes.ConstraintType_CONSTRAINT_TYPE_ANY,
+			},
+		},
+	}
+
+	rules = append(rules, &rtypes.Rule{
+		Resource:             "ethereum.uniswapV2_router.swapExactTokensForTokens",
+		Effect:               rtypes.Effect_EFFECT_ALLOW,
+		ParameterConstraints: constraints,
+		Target: &rtypes.Target{
+			TargetType: rtypes.TargetType_TARGET_TYPE_ADDRESS,
+			Target: &rtypes.Target_Address{
+				Address: UniswapV2RouterAddress,
+			},
+		},
+	})
+
+	return &rtypes.PolicySuggest{
+		MaxTxsPerWindow: conv.Ptr(uint32(len(rules))),
+		Rules:           rules,
+	}, nil
 }

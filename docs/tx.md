@@ -119,6 +119,12 @@ func (p *Plugin) ProposeTransactions(ctx context.Context, policy vtypes.PluginPo
 }
 ```
 
+For preparing `signRequest` you may also use builder from *vultisig/verifier* repo:
+```go
+func NewPluginKeysignRequestEvm(policy PluginPolicy, txToTrack string, chain vgcommon.Chain, tx []byte) (
+	*PluginKeysignRequest, error) 
+```
+
 ### Transaction Generation
 
 You should implement:
